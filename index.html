@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>招标采购助理工作台</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#5B8C5A;--primary-light:#7AAB78;--primary-dark:#3D6B3F;
+  --bg:#F5F0E1;--card:#FFFEF7;--card-alt:#F0EBD8;
+  --sidebar:#3D4A3D;--sidebar-hover:#4A5A4A;
+  --text:#3A3226;--text-light:#7A7165;--white:#FFF;
+  --border:#E0D9C0;--radius:10px;
+  --success:#5B8C5A;--success-bg:#E8F0E0;
+  --warning:#C49A3F;--warning-bg:#FAF0D8;
+  --danger:#B85450;--danger-bg:#F5E0DE;
+  --info:#6B8E7B;--info-bg:#E0EBE5;
+  --shadow:0 1px 3px rgba(139,115,85,.1);
+  --shadow-lg:0 4px 12px rgba(139,115,85,.15);
+  --highlight:#FFF8DC;
+}
+html{font-size:14px;-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+button{font-family:inherit;cursor:pointer;border:none;border-radius:var(--radius);transition:all .2s;-webkit-tap-highlight-color:transparent}
+input,select,textarea{font-family:inherit;font-size:15px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;outline:none;transition:border-color .2s;width:100%;background:#fff}
+input:focus,select:focus,textarea:focus{border-color:var(--primary-light)}
+a{color:var(--primary);text-decoration:none}
+
+/* ===== 顶部栏（手机+电脑） ===== */
+.topbar{position:fixed;top:0;left:0;right:0;height:52px;background:linear-gradient(135deg,#5B8C5A 0%,#3D6B3F 100%);color:var(--white);display:flex;align-items:center;padding:0 12px;z-index:200;box-shadow:0 2px 8px rgba(91,140,90,.25)}
+.topbar-menu{font-size:20px;padding:8px;cursor:pointer;background:none;border:none;color:var(--white)}
+.topbar-title{font-size:16px;font-weight:600;margin-left:4px;flex:1}
+.topbar-export{font-size:13px;padding:6px 12px;background:var(--sidebar-hover);color:#CBD5E1;border-radius:6px}
+
+/* ===== 侧边栏 ===== */
+.sidebar{position:fixed;top:52px;left:0;bottom:0;width:200px;background:#3D4A3D;color:var(--white);transform:translateX(-100%);transition:transform .25s;z-index:150;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:20px}
+.nav-item{padding:10px 16px;font-size:13px}
+.sidebar.show{transform:translateX(0)}
+.sidebar-mask{position:fixed;top:52px;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:140;display:none}
+.sidebar-mask.show{display:block}
+.nav-item{display:flex;align-items:center;gap:10px;padding:12px 16px;color:#CBD5E1;cursor:pointer;font-size:14px;transition:background .15s;border-left:3px solid transparent}
+.nav-item:active{background:var(--sidebar-hover)}
+.nav-item.active{background:var(--sidebar-hover);color:#fff;border-left-color:var(--primary-light)}
+.nav-icon{font-size:17px;width:20px;text-align:center}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--sidebar-hover);display:flex;gap:6px;flex-wrap:wrap}
+.sidebar-footer button{flex:1;padding:7px 4px;font-size:12px;background:var(--sidebar-hover);color:#CBD5E1;border-radius:6px}
+.sidebar-footer button:active{background:var(--primary-light)}
+
+/* ===== 主内容区 ===== */
+.main{padding:12px;margin-top:52px;max-width:1200px;margin-left:auto;margin-right:auto}
+.page{display:none}
+.page.active{display:block;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.page-header{margin-bottom:14px}
+.page-header h2{font-size:18px;font-weight:700}
+.page-header .sub{font-size:12px;color:var(--text-light);margin-top:2px}
+
+/* ===== 卡片 ===== */
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-bottom:12px}
+.card-title{font-size:15px;font-weight:600;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+
+/* ===== 按钮 ===== */
+.btn{padding:9px 18px;font-size:14px;border-radius:8px;font-weight:500}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:active{background:var(--primary-dark)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-success{background:var(--success);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-block{width:100%}
+
+/* ===== 表单 ===== */
+.form-group{margin-bottom:12px}
+.form-group label{display:block;margin-bottom:5px;font-weight:500;font-size:13px}
+.form-row{display:flex;gap:10px;flex-wrap:wrap}
+.form-row .form-group{flex:1;min-width:140px}
+
+/* ===== 表格（响应式） ===== */
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius)}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:500px}
+th{background:var(--primary);color:#fff;padding:9px 8px;text-align:left;font-weight:500;position:sticky;top:0;z-index:1}td{padding:8px;border-bottom:1px solid var(--border)}
+tr:active{background:#F0F4F8}
+
+/* ===== 标签 ===== */
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;white-space:nowrap}
+.tag-green{background:var(--success-bg);color:var(--success)}
+.tag-yellow{background:var(--warning-bg);color:var(--warning)}
+.tag-red{background:var(--danger-bg);color:var(--danger)}
+.tag-blue{background:var(--info-bg);color:var(--info)}
+.tag-gray{background:#F0F2F5;color:#6B7A8D}
+
+/* ===== 时间轴 ===== */
+.timeline{position:relative;padding-left:28px}
+.timeline::before{content:'';position:absolute;left:9px;top:0;bottom:0;width:2px;background:var(--border)}
+.timeline-item{position:relative;padding-bottom:16px}
+.timeline-item::before{content:'';position:absolute;left:-26px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--primary);border:2px solid #fff;box-shadow:0 0 0 2px var(--primary-light)}
+.timeline-item.legal::before{background:var(--danger)}
+.timeline-date{font-size:12px;color:var(--text-light)}
+.timeline-title{font-size:14px;font-weight:600}
+.timeline-desc{font-size:12px;color:var(--text-light)}
+.timeline-badge{display:inline-block;font-size:10px;padding:1px 5px;border-radius:4px;background:var(--danger-bg);color:var(--danger);margin-left:4px}
+
+/* ===== 问答卡片 ===== */
+.q-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-bottom:12px}
+.q-card h3{font-size:15px;margin-bottom:10px}
+.q-progress{display:flex;gap:4px;margin-bottom:10px}
+.q-dot{width:24px;height:24px;border-radius:50%;text-align:center;line-height:24px;font-size:11px;background:#E3E8EF;color:#6B7A8D}
+.q-dot.done{background:var(--success);color:#fff}
+.q-dot.current{background:var(--primary);color:#fff}
+.option-btn{display:block;width:100%;text-align:left;padding:12px;margin-bottom:6px;background:#F5F6F8;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px}
+.option-btn:active{border-color:var(--primary-light);background:#EBF3FF}
+.option-btn.selected{border-color:var(--primary);background:var(--info-bg);color:var(--info);font-weight:500}
+
+/* ===== 仪表盘 ===== */
+.dash-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.stat-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;text-align:center}
+.stat-num{font-size:26px;font-weight:700}
+.stat-label{font-size:12px;color:var(--text-light);margin-top:2px}
+.quick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.quick-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;cursor:pointer;border-left:3px solid var(--primary)}
+.quick-card:active{transform:scale(.98)}
+.quick-card h4{font-size:14px;margin-bottom:4px}
+.quick-card p{font-size:12px;color:var(--text-light)}
+
+/* ===== 进度条 ===== */
+.progress-bar{width:100%;height:7px;background:var(--border);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;background:var(--success);border-radius:4px;transition:width .3s}
+
+/* ===== 模态框 ===== */
+.modal-mask{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:300;justify-content:center;align-items:flex-start;padding:20px;overflow-y:auto}
+.modal-mask.show{display:flex}
+.modal{background:#fff;border-radius:var(--radius);padding:16px;width:100%;max-width:520px;margin:auto}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.modal-header h3{font-size:16px}
+.modal-close{background:none;border:none;font-size:22px;color:var(--text-light);cursor:pointer;padding:4px}
+
+/* ===== 任务 ===== */
+.task-item{display:flex;align-items:flex-start;gap:8px;padding:7px 0}
+.task-item input[type=checkbox]{margin-top:3px;accent-color:var(--success);width:18px;height:18px;flex-shrink:0}
+.task-item.done label{text-decoration:line-through;color:var(--text-light)}
+.task-item label{font-size:14px}
+
+/* ===== 知识库 ===== */
+.kb-search{width:100%;margin-bottom:12px;padding:10px 14px;border-radius:20px}
+.kb-sec{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}
+.kb-sec-header{padding:12px 14px;background:var(--primary);color:#fff;font-weight:600;font-size:14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.kb-sec-body{padding:0 14px;display:none}
+.kb-sec-body.open{display:block;padding-bottom:12px}
+.kb-item{padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+.kb-item:last-child{border:none}
+.kb-item strong{display:block;margin-bottom:2px}
+.kb-item .desc{color:var(--text-light);font-size:12px}
+
+/* ===== 打分表 ===== */
+.score-table{width:100%;border-collapse:collapse;font-size:12px}
+.score-table th{padding:6px 4px;font-size:11px;text-align:center;white-space:nowrap}
+.score-table td{padding:6px 4px;text-align:center;border:1px solid var(--border)}
+.score-table td:first-child{text-align:left}
+.judge-color-0{background:#FFF8E1}.judge-color-1{background:#E8F5E9}.judge-color-2{background:#E3F2FD}
+.judge-color-3{background:#F3E5F5}.judge-color-4{background:#FFF3E0}.judge-color-5{background:#E0F7FA}.judge-color-6{background:#FCE4EC}
+.highlight-row{background:#FFF8DC!important;font-weight:600}
+
+/* ===== 其他 ===== */
+.result-box{background:#F0F7FF;border:1px solid #BAE6FD;border-radius:8px;padding:12px;margin-top:10px}
+.empty{text-align:center;padding:30px 12px;color:var(--text-light)}
+.empty-icon{font-size:36px;margin-bottom:8px;opacity:.3}
+.search-box{width:100%;margin-bottom:12px;padding:9px 14px;border-radius:20px}
+.checkbox-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.checkbox-row label{display:flex;align-items:center;gap:3px;font-size:12px;font-weight:400;white-space:nowrap}
+.hint{font-size:12px;color:var(--text-light);font-style:italic}
+.collapsible-header{cursor:pointer;user-select:none}
+.collapsible-header:active{background:#F0F4F8}
+.collapsible-body{display:none}
+.collapsible-body.open{display:block}
+.tab-bar{display:flex;gap:4px;margin-bottom:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+.tab-btn{padding:7px 14px;font-size:13px;background:#fff;border:1px solid var(--border);border-radius:20px;white-space:nowrap;flex-shrink:0}
+.tab-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+/* ===== 电脑端适配 ===== */
+@media(min-width:900px){
+  .topbar-menu{display:none}
+  .topbar-title{margin-left:16px}
+  .sidebar{transform:translateX(0);width:220px}
+  .sidebar-mask{display:none!important}
+  .main{margin-left:220px;padding:24px;margin-top:52px;max-width:1100px}
+  .dash-stats{grid-template-columns:repeat(4,1fr)}
+  .quick-grid{grid-template-columns:repeat(3,1fr)}
+  .page-header h2{font-size:22px}
+  .card{padding:20px}
+  th,td{padding:10px 12px}
+  table{font-size:13px}
+  .form-row .form-group{min-width:200px}
+}
+</style>
+</head>
+<body>
+
+<!-- 顶部栏 -->
+<div class="topbar">
+  <button class="topbar-menu" onclick="toggleSidebar()">☰</button>
+  <span class="topbar-title" id="topbarTitle">招标采购工作台</span>
+  <button class="topbar-export" onclick="exportData()">导出</button>
+</div>
+
+<!-- 侧边栏 -->
+<div class="sidebar-mask" id="sideMask" onclick="closeSidebar()"></div>
+<aside class="sidebar" id="sidebar">
+  <nav>
+    <div class="nav-item active" data-page="dashboard" onclick="navTo('dashboard')"><span class="nav-icon">📊</span> 工作台总览</div>
+    <div class="nav-item" data-page="calc" onclick="navTo('calc')"><span class="nav-icon">📅</span> 时间节点计算</div>
+    <div class="nav-item" data-page="decision" onclick="navTo('decision')"><span class="nav-icon">🧭</span> 采购方式决策</div>
+    <div class="nav-item" data-page="projects" onclick="navTo('projects')"><span class="nav-icon">📁</span> 项目台账</div>
+    <div class="nav-item" data-page="scoring" onclick="navTo('scoring')"><span class="nav-icon">🎯</span> 评标打分</div>
+    <div class="nav-item" data-page="price" onclick="navTo('price')"><span class="nav-icon">💰</span> 报价对比</div>
+    <div class="nav-item" data-page="opening" onclick="navTo('opening')"><span class="nav-icon">📦</span> 开标记录</div>
+    <div class="nav-item" data-page="contract" onclick="navTo('contract')"><span class="nav-icon">📋</span> 合同审查</div>
+    <div class="nav-item" data-page="archive" onclick="navTo('archive')"><span class="nav-icon">🗂️</span> 归档清单</div>
+    <div class="nav-item" data-page="plan" onclick="navTo('plan')"><span class="nav-icon">📈</span> 新人30天</div>
+    <div class="nav-item" data-page="guide" onclick="navTo('guide')"><span class="nav-icon">📖</span> 入门指南</div>
+    <div class="nav-item" data-page="sop" onclick="navTo('sop')"><span class="nav-icon">📝</span> 流程SOP</div>
+    <div class="nav-item" data-page="templates" onclick="navTo('templates')"><span class="nav-icon">📄</span> 文档模板</div>
+    <div class="nav-item" data-page="law" onclick="navTo('law')"><span class="nav-icon">⚖️</span> 法规速查</div>
+    <div class="nav-item" data-page="learn" onclick="navTo('learn')"><span class="nav-icon">🎓</span> 学习课堂</div>
+    <div class="nav-item" data-page="log" onclick="navTo('log')"><span class="nav-icon">✏️</span> 工作日志</div>
+    <div class="nav-item" data-page="links" onclick="navTo('links')"><span class="nav-icon">🔗</span> 常用网站</div>
+  </nav>
+  <div class="sidebar-footer">
+    <button onclick="document.getElementById('importFile').click()">📥 导入</button>
+    <button onclick="clearData()">🗑️ 清空</button>
+  </div>
+  <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+</aside>
+
+<!-- 主内容区 -->
+<main class="main">
+
+<!-- ===== 1. 工作台总览 ===== -->
+<div id="page-dashboard" class="page active">
+  <div class="page-header"><h2>👋 欢迎使用</h2><div class="sub">招标采购助理一站式工作台</div></div>
+  <div class="dash-stats" id="dashStats"></div>
+  <div class="card">
+    <div class="card-title">快捷入口</div>
+    <div class="quick-grid" id="quickGrid"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">近期项目</div>
+    <div id="recentProjects"></div>
+  </div>
+</div>
+
+<!-- ===== 2. 时间节点计算器 ===== -->
+<div id="page-calc" class="page">
+  <div class="page-header"><h2>📅 时间节点计算器</h2><div class="sub">输入公告日期，自动算出全部法定时间节点</div></div>
+  <div class="card">
+    <div class="form-row">
+      <div class="form-group" style="max-width:200px">
+        <label>招标公告发布日期</label>
+        <input type="date" id="calcDate">
+      </div>
+    </div>
+    <div class="form-row">
+      <button class="btn btn-primary" onclick="calcTimeline()">计算</button>
+      <button class="btn btn-outline" onclick="copyTimeline()">复制结果</button>
+    </div>
+  </div>
+  <div id="calcResult"></div>
+</div>
+
+<!-- ===== 3. 采购方式决策 ===== -->
+<div id="page-decision" class="page">
+  <div class="page-header"><h2>🧭 采购方式决策助手</h2><div class="sub">回答几个问题，自动推荐采购方式</div></div>
+  <div id="decisionContent"></div>
+</div>
+
+<!-- ===== 4. 项目台账 ===== -->
+<div id="page-projects" class="page">
+  <div class="page-header"><h2>📁 在手项目台账</h2><div class="sub">管理所有采购项目进度</div></div>
+  <div class="card">
+    <div class="form-row" style="margin-bottom:10px">
+      <div class="form-group" style="max-width:160px">
+        <select id="filterStage" onchange="renderProjects()">
+          <option value="">全部阶段</option>
+          <option>立项准备</option><option>招标文件编制</option><option>公告发布</option>
+          <option>答疑澄清</option><option>等待投标</option><option>开标完成</option>
+          <option>评标完成</option><option>公示中</option><option>已发中标通知书</option>
+          <option>合同签订</option><option>已归档</option>
+        </select>
+      </div>
+      <div class="form-group" style="max-width:200px">
+        <input type="text" id="searchProject" placeholder="搜索名称/编号..." oninput="renderProjects()">
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openProjectModal()">+ 新增</button>
+    </div>
+    <div class="table-wrap">
+      <table><thead><tr>
+        <th>项目名称</th><th>编号</th><th>方式</th><th>预算(万)</th><th>阶段</th><th>操作</th>
+      </tr></thead><tbody id="projectTableBody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 5. 评标打分 ===== -->
+<div id="page-scoring" class="page">
+  <div class="page-header"><h2>🎯 评标打分表</h2><div class="sub">综合评估法，多评委打分自动汇总</div></div>
+  <div class="card">
+    <div class="form-row">
+      <div class="form-group"><label>项目名称</label><input type="text" id="scProjName" placeholder="项目名称"></div>
+      <div class="form-group" style="max-width:80px"><label>投标人数</label><input type="number" id="scBidderCount" value="5" min="2" max="10" onchange="buildScoringTable()"></div>
+      <div class="form-group" style="max-width:80px"><label>评委人数</label><input type="number" id="scJudgeCount" value="5" min="3" max="9" onchange="buildScoringTable()"></div>
+      <div class="form-group" style="max-width:80px"><label>价格满分</label><input type="number" id="scPriceMax" value="30"></div>
+      <div class="form-group" style="max-width:80px"><label>技术满分</label><input type="number" id="scTechMax" value="70"></div>
+    </div>
+    <button class="btn btn-primary" onclick="buildScoringTable()">生成打分表</button>
+  </div>
+  <div id="scoringTable"></div>
+</div>
+
+<!-- ===== 6. 报价对比 ===== -->
+<div id="page-price" class="page">
+  <div class="page-header"><h2>💰 投标报价对比</h2><div class="sub">自动计算偏差率和排名</div></div>
+  <div class="card">
+    <div class="form-row">
+      <div class="form-group"><label>项目名称</label><input type="text" id="prProjName" placeholder="项目名称"></div>
+      <div class="form-group" style="max-width:140px"><label>招标控制价(元)</label><input type="number" id="prCtrlPrice" placeholder="如1050000"></div>
+      <div class="form-group" style="max-width:80px"><label>投标人数</label><input type="number" id="prBidderCount" value="5" min="2" max="10"></div>
+      <div class="form-group" style="display:flex;align-items:flex-end"><button class="btn btn-primary" onclick="buildPriceTable()">生成对比表</button></div>
+    </div>
+  </div>
+  <div id="priceTable"></div>
+</div>
+
+<!-- ===== 7. 开标记录 ===== -->
+<div id="page-opening" class="page">
+  <div class="page-header"><h2>📦 开标记录表</h2><div class="sub">现场记录投标信息和唱标结果</div></div>
+  <div class="card">
+    <div class="form-row">
+      <div class="form-group"><label>项目名称</label><input type="text" id="opProjName" placeholder="项目名称"></div>
+      <div class="form-group"><label>招标人</label><input type="text" id="opClient" placeholder="招标人"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>开标日期</label><input type="date" id="opDate"></div>
+      <div class="form-group"><label>开标地点</label><input type="text" id="opLocation" placeholder="开标地点"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="max-width:80px"><label>投标人数</label><input type="number" id="opBidderCount" value="5" min="2" max="10"></div>
+      <div class="form-group" style="display:flex;align-items:flex-end"><button class="btn btn-primary" onclick="buildOpeningTable()">生成记录表</button></div>
+    </div>
+  </div>
+  <div id="openingTable"></div>
+</div>
+
+<!-- ===== 8. 合同审查 ===== -->
+<div id="page-contract" class="page">
+  <div class="page-header"><h2>📋 合同审查清单</h2><div class="sub">选择合同类型，生成审查要点</div></div>
+  <div class="card">
+    <div class="form-row">
+      <div class="form-group" style="max-width:200px">
+        <label>合同类型</label>
+        <select id="contractType" onchange="genContractChecklist()">
+          <option value="">请选择...</option>
+          <option value="goods">货物采购合同</option>
+          <option value="service">服务采购合同</option>
+          <option value="engineering">工程采购合同</option>
+        </select>
+      </div>
+      <div class="form-group" style="display:flex;align-items:flex-end">
+        <button class="btn btn-outline" onclick="exportChecklist()">导出记录</button>
+      </div>
+    </div>
+  </div>
+  <div id="contractChecklist"></div>
+</div>
+
+<!-- ===== 9. 归档清单 ===== -->
+<div id="page-archive" class="page">
+  <div class="page-header"><h2>🗂️ 项目归档清单</h2><div class="sub">逐项检查归档文件是否齐全</div></div>
+  <div class="card">
+    <div id="archiveChecklist"></div>
+    <div style="margin-top:12px;text-align:center" id="archiveStats"></div>
+  </div>
+</div>
+
+<!-- ===== 10. 新人30天 ===== -->
+<div id="page-plan" class="page">
+  <div class="page-header"><h2>📈 新人30天成长计划</h2><div class="sub">四周学习路径，有节奏度过新手期</div></div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-weight:600">总体进度</span><span id="planProgressText">0/0</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="planProgressBar" style="width:0%"></div></div>
+  </div>
+  <div id="planContent"></div>
+</div>
+
+<!-- ===== 11. 入门指南 ===== -->
+<div id="page-guide" class="page">
+  <div class="page-header"><h2>📖 招标采购入门指南</h2><div class="sub">全流程知识，新人必读</div></div>
+  <div id="guideContent"></div>
+</div>
+
+<!-- ===== 12. 流程SOP ===== -->
+<div id="page-sop" class="page">
+  <div class="page-header"><h2>📝 标准操作流程SOP</h2><div class="sub">每一步的操作清单</div></div>
+  <div id="sopContent"></div>
+</div>
+
+<!-- ===== 13. 文档模板 ===== -->
+<div id="page-templates" class="page">
+  <div class="page-header"><h2>📄 常用文档模板</h2><div class="sub">点击展开，可复制使用</div></div>
+  <div id="templatesContent"></div>
+</div>
+
+<!-- ===== 14. 法规速查 ===== -->
+<div id="page-law" class="page">
+  <div class="page-header"><h2>⚖️ 法规速查</h2><div class="sub">常用法条分类速查</div></div>
+  <div class="card">
+    <input type="text" class="search-box" id="lawSearch" placeholder="🔍 搜索关键词..." oninput="renderLaw()">
+  </div>
+  <div id="lawContent"></div>
+</div>
+
+<!-- ===== 15. 学习课堂 ===== -->
+<div id="page-learn" class="page">
+  <div class="page-header"><h2>🎓 新人学习课堂</h2><div class="sub">招标采购系统知识，逐章学习</div></div>
+  <div class="card" style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span style="font-weight:600">学习进度</span><span id="learnProgressText">0/0</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="learnProgressBar" style="width:0%"></div></div>
+  </div>
+  <div id="learnContent"></div>
+</div>
+
+<!-- ===== 16. 工作日志 ===== -->
+<div id="page-log" class="page">
+  <div class="page-header"><h2>✏️ 工作日志</h2><div class="sub">事事留痕，每日记录，审计无忧</div></div>
+  <div class="card">
+    <div class="form-row">
+      <div class="form-group" style="max-width:160px"><label>日期</label><input type="date" id="logDate"></div>
+      <div class="form-group" style="max-width:160px"><label>关联项目</label><input type="text" id="logProject" placeholder="项目名称/编号"></div>
+    </div>
+    <div class="form-group"><label>工作内容（做了什么）</label><textarea id="logContent" rows="3" placeholder="例：编制XX项目招标文件初稿，完成技术需求章节..."></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>沟通对象</label><input type="text" id="logContact" placeholder="如：XX总/XX公司/评委等"></div>
+      <div class="form-group"><label>沟通方式</label>
+        <select id="logMethod"><option>现场会议</option><option>电话</option><option>微信</option><option>邮件</option><option>系统/OA</option><option>其他</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>留痕方式</label>
+      <select id="logTrace"><option>邮件确认</option><option>会议纪要</option><option>签收单</option><option>系统记录</option><option>截图存档</option><option>情况说明</option><option>暂未留痕(待补)</option></select>
+    </div>
+    <div class="form-group"><label>备注/待办</label><input type="text" id="logRemark" placeholder="待办事项或补充说明"></div>
+    <button class="btn btn-primary btn-block" onclick="addLog()">+ 添加日志</button>
+  </div>
+  <div class="card">
+    <div class="form-row" style="margin-bottom:10px">
+      <div class="form-group" style="max-width:140px"><select id="filterLogTrace" onchange="renderLogs()"><option value="">全部留痕</option><option>邮件确认</option><option>会议纪要</option><option>签收单</option><option>系统记录</option><option>截图存档</option><option>情况说明</option><option>暂未留痕(待补)</option></select></div>
+      <div class="form-group" style="max-width:140px"><input type="text" id="searchLog" placeholder="搜索关键词..." oninput="renderLogs()"></div>
+      <div class="form-group" style="display:flex;align-items:flex-end"><button class="btn btn-outline btn-sm" onclick="exportLogs()">导出日志</button></div>
+    </div>
+    <div id="logList"></div>
+  </div>
+</div>
+
+<!-- ===== 17. 常用网站 ===== -->
+<div id="page-links" class="page">
+  <div class="page-header"><h2>🔗 常用网站导航</h2><div class="sub">河南省安阳市招标采购常用网站，点击直达</div></div>
+  <div id="linksContent"></div>
+</div>
+
+<!-- 项目编辑模态框 -->
+<div class="modal-mask" id="projectModal" onclick="if(event.target===this)closeProjectModal()">
+  <div class="modal">
+    <div class="modal-header"><h3 id="projectModalTitle">新增项目</h3><button class="modal-close" onclick="closeProjectModal()">×</button></div>
+    <input type="hidden" id="editIndex">
+    <div class="form-group"><label>项目名称 *</label><input type="text" id="pName" placeholder="项目名称"></div>
+    <div class="form-row">
+      <div class="form-group"><label>项目编号</label><input type="text" id="pCode" placeholder="ZB-2026-001"></div>
+      <div class="form-group"><label>甲方</label><input type="text" id="pClient" placeholder="甲方全称"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>采购方式</label>
+        <select id="pMethod"><option>公开招标</option><option>邀请招标</option><option>竞争性谈判</option><option>竞争性磋商</option><option>单一来源</option><option>询价</option></select>
+      </div>
+      <div class="form-group"><label>预算(万元)</label><input type="number" id="pBudget" placeholder="50"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>当前阶段</label>
+        <select id="pStage"><option>立项准备</option><option>招标文件编制</option><option>公告发布</option><option>答疑澄清</option><option>等待投标</option><option>开标完成</option><option>评标完成</option><option>公示中</option><option>已发中标通知书</option><option>合同签订</option><option>已归档</option></select>
+      </div>
+      <div class="form-group"><label>负责人</label><input type="text" id="pOwner" placeholder="负责人"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>投标截止日</label><input type="date" id="pBidDate"></div>
+      <div class="form-group"><label>开标日期</label><input type="date" id="pOpenDate"></div>
+    </div>
+    <div class="form-group"><label>备注</label><textarea id="pRemark" placeholder="补充说明..." rows="2"></textarea></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px">
+      <button class="btn btn-outline" onclick="closeProjectModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveProject()">保存</button>
+    </div>
+  </div>
+</div>
+
+</main>
+<script>
+// ===== 数据存储 =====
+function lsGet(k,d){try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}}
+function lsSet(k,v){localStorage.setItem(k,JSON.stringify(v))}
+let S={projects:lsGet('zb2_projects',[]),plan:lsGet('zb2_plan',{}),checklist:lsGet('zb2_checklist',{}),archive:lsGet('zb2_archive',[]),learn:lsGet('zb2_learn',{}),logs:lsGet('zb2_logs',[])};
+function save(){lsSet('zb2_projects',S.projects);lsSet('zb2_plan',S.plan);lsSet('zb2_checklist',S.checklist);lsSet('zb2_archive',S.archive);lsSet('zb2_learn',S.learn);lsSet('zb2_logs',S.logs)}
+
+// ===== 导航 =====
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('show');document.getElementById('sideMask').classList.toggle('show')}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('show');document.getElementById('sideMask').classList.remove('show')}
+function navTo(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  document.querySelector('.nav-item[data-page="'+p+'"]').classList.add('active');
+  closeSidebar();window.scrollTo(0,0);
+  if(p==='dashboard')renderDashboard();
+  if(p==='projects')renderProjects();
+  if(p==='plan')renderPlan();
+  if(p==='archive')renderArchive();
+  if(p==='guide')renderGuide();
+  if(p==='sop')renderSOP();
+  if(p==='templates')renderTemplates();
+  if(p==='law')renderLaw();
+  if(p==='learn')renderLearn();
+  if(p==='log')renderLogs();
+  if(p==='links')renderLinks();
+}
+
+// ===== 1. 仪表盘 =====
+function stageColor(s){return{'立项准备':'tag-blue','招标文件编制':'tag-blue','公告发布':'tag-blue','答疑澄清':'tag-yellow','等待投标':'tag-yellow','开标完成':'tag-yellow','评标完成':'tag-yellow','公示中':'tag-yellow','已发中标通知书':'tag-green','合同签订':'tag-green','已归档':'tag-gray'}[s]||'tag-gray'}
+function renderDashboard(){
+  const ps=S.projects;const active=ps.filter(p=>p.stage!=='已归档').length;const archived=ps.filter(p=>p.stage==='已归档').length;const budget=ps.reduce((s,p)=>s+(parseFloat(p.budget)||0),0);
+  const planT=Object.values(S.plan).flat()||[];const doneT=planT.filter(t=>t.done).length;const pct=planT.length?Math.round(doneT/planT.length*100):0;
+  document.getElementById('dashStats').innerHTML='<div class="stat-card"><div class="stat-num" style="color:#2D7FF9">'+active+'</div><div class="stat-label">在手项目</div></div><div class="stat-card"><div class="stat-num" style="color:#22A06B">'+archived+'</div><div class="stat-label">已归档</div></div><div class="stat-card"><div class="stat-num" style="color:#E8A317">'+budget+'</div><div class="stat-label">预算(万)</div></div><div class="stat-card"><div class="stat-num" style="color:#E5484D">'+pct+'%</div><div class="stat-label">学习完成</div></div>';
+  const qcards=[['calc','📅','时间计算','#5B8C5A'],['decision','🧭','方式决策','#8B7355'],['projects','📁','项目台账','#5B8C5A'],['scoring','🎯','评标打分','#7AAB78'],['contract','📋','合同审查','#C49A3F'],['learn','🎓','学习课堂','#6B8E7B'],['links','🔗','常用网站','#B8A088'],['plan','📈','30天计划','#5B8C5A'],['guide','📖','入门指南','#7AAB78'],['templates','📄','文档模板','#C49A3F']];
+  document.getElementById('quickGrid').innerHTML=qcards.map(c=>'<div class="quick-card" onclick="navTo(\''+c[0]+'\')" style="border-left-color:'+c[3]+'"><h4>'+c[1]+' '+c[2]+'</h4></div>').join('');
+  if(ps.length===0){document.getElementById('recentProjects').innerHTML='<div class="empty"><div class="empty-icon">📁</div>暂无项目，去项目台账新增</div>'}
+  else{const r=ps.slice(-5).reverse();document.getElementById('recentProjects').innerHTML='<div class="table-wrap"><table><thead><tr><th>项目</th><th>阶段</th><th>负责人</th></tr></thead><tbody>'+r.map(p=>'<tr><td>'+p.name+'</td><td><span class="tag '+stageColor(p.stage)+'">'+p.stage+'</span></td><td>'+(p.owner||'-')+'</td></tr>').join('')+'</tbody></table></div>'}
+}
+
+// ===== 2. 时间节点 =====
+function calcTimeline(){
+  const d=document.getElementById('calcDate').value;if(!d){alert('请选择日期');return}
+  const dt=new Date(d);function ad(dd,n){const r=new Date(dd);r.setDate(r.getDate()+n);return r}
+  function awd(dd,n){let r=new Date(dd),c=0;while(c<n){r.setDate(r.getDate()+1);if(r.getDay()!==0&&r.getDay()!==6)c++}return r}
+  function f(x){return x.getFullYear()+'/'+(x.getMonth()+1)+'/'+x.getDate()}
+  function w(x){return'日一二三四五六'[x.getDay()]}
+  const items=[
+    {d:dt,t:'招标公告发布',desc:'在指定平台发布公告',legal:1},
+    {d:dt,t:'招标文件开始发售',desc:'投标人可购买/下载文件',legal:0},
+    {d:awd(dt,5),t:'招标文件发售截止',desc:'发售期不少于5个工作日',legal:1},
+    {d:ad(dt,5),t:'答疑提问截止',desc:'投标截止15日前可提问',legal:1},
+    {d:ad(dt,20),t:'投标文件递交截止',desc:'公告发布后不少于20日',legal:1},
+    {d:ad(dt,20),t:'开标',desc:'投标截止时间即为开标时间',legal:1},
+    {d:ad(dt,21),t:'评标',desc:'开标后组织评审(通常1-3天)',legal:0},
+    {d:ad(dt,22),t:'中标候选人公示开始',desc:'评标完成后发布公示',legal:0},
+    {d:ad(dt,25),t:'中标候选人公示结束',desc:'公示期不少于3日',legal:1},
+    {d:ad(dt,26),t:'发出中标通知书',desc:'公示无异议后发出',legal:0},
+    {d:ad(dt,56),t:'合同签订截止',desc:'中标通知书发出后30日内',legal:1},
+    {d:awd(ad(dt,26),5),t:'退还投标保证金',desc:'通知书发出后5个工作日内',legal:1},
+  ];
+  let h='<div class="card"><div class="card-title">⏰ 全流程时间节点</div><div class="timeline">';
+  items.forEach(i=>{h+='<div class="timeline-item'+(i.legal?' legal':'')+'"><div class="timeline-date">'+f(i.d)+'（周'+w(i.d)+'）</div><div class="timeline-title">'+i.t+(i.legal?'<span class="timeline-badge">法定</span>':'')+'</div><div class="timeline-desc">'+i.desc+'</div></div>'});
+  h+='</div></div>';
+  window._tlText=items.map(i=>f(i.d)+'（周'+w(i.d)+'）  '+i.t+'  '+i.desc+(i.legal?' [法定]':'')).join('\n');
+  document.getElementById('calcResult').innerHTML=h;
+}
+function copyTimeline(){if(!window._tlText){alert('请先计算');return}navigator.clipboard.writeText(window._tlText).then(()=>alert('✅已复制')).catch(()=>{const t=document.createElement('textarea');t.value=window._tlText;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);alert('✅已复制')})}
+
+// ===== 3. 采购方式决策 =====
+let D={step:0,ans:{}};
+const DQ=[
+  {k:'fund',q:'项目资金来源？',o:['财政资金（政府/事业单位）','企业自有资金','工程建设资金']},
+  {k:'amount',q:'采购金额？',o:['50万以下','50万-200万','200万以上']},
+  {k:'suppliers',q:'潜在供应商有多少？',o:['只有1家','2-3家','3家以上/不确定']},
+  {k:'clarity',q:'需求是否明确？',o:['需求明确清晰','不太明确需协商','技术复杂需磋商']},
+  {k:'type',q:'采购对象类型？',o:['货物','服务','工程']},
+];
+function renderDecision(){
+  const s=D;
+  if(s.step<DQ.length){const q=DQ[s.step];
+    document.getElementById('decisionContent').innerHTML='<div class="q-card"><div class="q-progress">'+DQ.map((_,i)=>'<span class="q-dot '+(i<s.step?'done':i===s.step?'current':'')+'">'+(i+1)+'</span>').join('')+'</div><h3>'+q.q+'</h3>'+q.o.map(o=>'<button class="option-btn" onclick="ansD(\''+q.k+'\',\''+o+'\')">'+o+'</button>').join('')+'</div>'+(s.step>0?'<button class="btn btn-outline" onclick="prevD()">← 上一步</button>':'')}
+  else{showDecisionResult()}
+}
+function ansD(k,v){D.ans[k]=v;D.step++;renderDecision()}
+function prevD(){if(D.step>0)D.step--;renderDecision()}
+function resetD(){D={step:0,ans:{}};renderDecision()}
+function showDecisionResult(){
+  const a=D.ans;let m='',r='',b='';
+  if(a.suppliers==='只有1家'){m='单一来源采购';r='只有一家供应商可供选择，需严格论证不可替代性';b='《政府采购法》第三十一条'}
+  else if(a.clarity==='技术复杂需磋商'){m='竞争性磋商';r='技术复杂需磋商方案，允许多轮磋商后综合评分';b='《政府采购竞争性磋商采购方式管理暂行办法》'}
+  else if(a.clarity==='不太明确需协商'){m='竞争性谈判';r='需求不太明确，需通过谈判确定规格和价格';b='《政府采购法》第三十八条'}
+  else if(a.amount==='50万以下'&&a.type!=='工程'){m='询价';r='金额小且需求明确，快速比价选最低价';b='《政府采购法》第四十条'}
+  else{m='公开招标';r='金额较大、需求明确、供应商充足，最规范透明的采购方式';b='《招标投标法》第三条'}
+  const steps=['准备需求文件并报批',m==='公开招标'||m==='邀请招标'?'编制招标文件':'编制采购/谈判文件',m==='公开招标'?'在平台发布招标公告':m==='邀请招标'?'向特定供应商发邀请':'邀请不少于3家供应商','接收投标文件并组织开标/谈判','评审确定成交供应商','公示结果并发中标通知书','签订合同并归档'];
+  document.getElementById('decisionContent').innerHTML='<div class="q-card"><h3>✅ 推荐</h3><div class="result-box"><div style="font-size:20px;font-weight:700;margin-bottom:6px">'+m+'</div><p style="margin-bottom:6px"><b>理由：</b>'+r+'</p><p><b>依据：</b>'+b+'</p></div></div><div class="card"><div class="card-title">选择回顾</div><table>'+DQ.map(q=>'<tr><td style="width:40%;font-weight:500">'+q.q+'</td><td>'+(a[q.k]||'-')+'</td></tr>').join('')+'</table></div><div class="card"><div class="card-title">操作步骤</div><ol style="padding-left:18px;line-height:2">'+steps.map(s=>'<li>'+s+'</li>').join('')+'</ol></div><button class="btn btn-primary" onclick="resetD()">重新选择</button>';
+}
+
+// ===== 4. 项目台账 =====
+function renderProjects(){
+  const f=document.getElementById('filterStage').value;const s=(document.getElementById('searchProject').value||'').toLowerCase();
+  let list=S.projects.filter(p=>{if(f&&p.stage!==f)return false;if(s&&!(p.name||'').toLowerCase().includes(s)&&!(p.code||'').toLowerCase().includes(s))return false;return true});
+  if(!list.length){document.getElementById('projectTableBody').innerHTML='<tr><td colspan="6" class="empty">暂无项目，点新增添加</td></tr>';return}
+  document.getElementById('projectTableBody').innerHTML=list.map((p,i)=>{const idx=S.projects.indexOf(p);return'<tr><td>'+p.name+'</td><td>'+(p.code||'-')+'</td><td><span class="tag tag-blue">'+(p.method||'-')+'</span></td><td>'+(p.budget||'-')+'</td><td><span class="tag '+stageColor(p.stage)+'">'+p.stage+'</span></td><td><button class="btn btn-sm btn-outline" onclick="openProjectModal('+idx+')">编辑</button> <button class="btn btn-sm btn-danger" onclick="delProject('+idx+')">删</button></td></tr>'}).join('');
+}
+function openProjectModal(idx){
+  const m=document.getElementById('projectModal');
+  if(idx>=0){const p=S.projects[idx];document.getElementById('projectModalTitle').textContent='编辑项目';document.getElementById('editIndex').value=idx;
+    ['pName','pCode','pClient','pBudget','pOwner','pRemark'].forEach(id=>document.getElementById(id).value=p[id.replace('p','').toLowerCase()]||'');
+    document.getElementById('pMethod').value=p.method||'公开招标';document.getElementById('pStage').value=p.stage||'立项准备';
+  }else{document.getElementById('projectModalTitle').textContent='新增项目';document.getElementById('editIndex').value='';['pName','pCode','pClient','pBudget','pOwner','pRemark'].forEach(id=>document.getElementById(id).value='')}
+  m.classList.add('show');
+}
+function closeProjectModal(){document.getElementById('projectModal').classList.remove('show')}
+function saveProject(){
+  const name=document.getElementById('pName').value.trim();if(!name){alert('名称不能为空');return}
+  const p={name,code:document.getElementById('pCode').value.trim(),client:document.getElementById('pClient').value.trim(),method:document.getElementById('pMethod').value,budget:document.getElementById('pBudget').value,stage:document.getElementById('pStage').value,owner:document.getElementById('pOwner').value.trim(),bidDate:document.getElementById('pBidDate').value,openDate:document.getElementById('pOpenDate').value,remark:document.getElementById('pRemark').value.trim()};
+  const idx=document.getElementById('editIndex').value;if(idx!=='')S.projects[idx]=p;else S.projects.push(p);save();closeProjectModal();renderProjects();
+}
+function delProject(idx){if(!confirm('确定删除？'))return;S.projects.splice(idx,1);save();renderProjects()}
+
+// ===== 5. 评标打分 =====
+function buildScoringTable(){
+  const nb=parseInt(document.getElementById('scBidderCount').value)||5;const nj=parseInt(document.getElementById('scJudgeCount').value)||5;const pmax=parseFloat(document.getElementById('scPriceMax').value)||30;const tmax=parseFloat(document.getElementById('scTechMax').value)||70;
+  let h='<div class="card"><div class="card-title">价格评分（满分'+pmax+'）</div><div class="table-wrap"><table><thead><tr><th>投标人</th><th>报价(元)</th><th>价格分</th></tr></thead><tbody>';
+  for(let i=0;i<nb;i++){h+='<tr><td><input type="text" id="scB'+i+'" placeholder="投标人'+(i+1)+'" style="padding:4px 8px;font-size:12px"></td><td><input type="number" id="scP'+i+'" placeholder="0" style="padding:4px 8px;font-size:12px" oninput="calcScoring()"></td><td id="scPScore'+i+'" style="font-weight:600;color:#2D7FF9">-</td></tr>'}
+  h+='</tbody></table></div><p class="hint">价格分=最低报价÷本行报价×'+pmax+'</p></div>';
+  h+='<div class="card"><div class="card-title">技术评分明细（每位评委打分，满分'+tmax+'）</div><div class="table-wrap"><table class="score-table"><thead><tr><th>投标人</th>';
+  for(let j=0;j<nj;j++)h+='<th>评委'+String.fromCharCode(65+j)+'</th>';
+  h+='<th>技术均分</th></tr></thead><tbody>';
+  for(let i=0;i<nb;i++){h+='<tr><td id="scBLabel'+i+'">投标人'+(i+1)+'</td>';for(let j=0;j<nj;j++){h+='<td class="judge-color-'+j+'"><input type="number" id="scT_'+i+'_'+j+'" placeholder="0" style="width:50px;padding:3px;font-size:11px;text-align:center" oninput="calcScoring()"></td>'}h+='<td id="scTAvg'+i+'" style="font-weight:600;color:#22A06B">-</td></tr>'}
+  h+='</tbody></table></div><p class="hint">技术均分=去掉一个最高一个最低后取平均</p></div>';
+  h+='<div class="card"><div class="card-title">🏆 最终排名</div><div class="table-wrap"><table><thead><tr><th>排名</th><th>投标人</th><th>价格分</th><th>技术分</th><th>总分</th></tr></thead><tbody id="scFinalBody"></tbody></table></div></div>';
+  document.getElementById('scoringTable').innerHTML=h;
+  calcScoring();
+}
+function calcScoring(){
+  const nb=parseInt(document.getElementById('scBidderCount').value)||5;const nj=parseInt(document.getElementById('scJudgeCount').value)||5;const pmax=parseFloat(document.getElementById('scPriceMax').value)||30;const tmax=parseFloat(document.getElementById('scTechMax').value)||70;
+  const prices=[];for(let i=0;i<nb;i++){const v=parseFloat(document.getElementById('scP'+i).value)||0;prices.push(v)}
+  const minP=Math.min(...prices.filter(p=>p>0))||0;
+  const results=[];
+  for(let i=0;i<nb;i++){
+    const price=prices[i];const ps=price>0&&minP>0?(minP/price*pmax):0;
+    document.getElementById('scPScore'+i).textContent=ps.toFixed(2);
+    const scores=[];for(let j=0;j<nj;j++){const v=parseFloat(document.getElementById('scT_'+i+'_'+j).value)||0;scores.push(v)}
+    const valid=scores.filter(s=>s>0);let tavg=0;
+    if(valid.length>=3){valid.sort((a,b)=>a-b);const trimmed=valid.slice(1,-1);tavg=trimmed.reduce((s,x)=>s+x,0)/trimmed.length}
+    else if(valid.length>0){tavg=valid.reduce((s,x)=>s+x,0)/valid.length}
+    tavg=Math.min(tavg,tmax);
+    document.getElementById('scTAvg'+i).textContent=tavg.toFixed(2);
+    const name=document.getElementById('scB'+i).value||'投标人'+(i+1);document.getElementById('scBLabel'+i).textContent=name;
+    results.push({name,price,ps,ts:tavg,total:(ps+tavg).toFixed(2)});
+  }
+  results.sort((a,b)=>parseFloat(b.total)-parseFloat(a.total));
+  const fb=document.getElementById('scFinalBody');
+  if(fb)fb.innerHTML=results.map((r,i)=>'<tr'+(i===0?' class="highlight-row"':'')+'><td>'+(i+1)+'</td><td>'+r.name+'</td><td>'+r.ps.toFixed(2)+'</td><td>'+r.ts.toFixed(2)+'</td><td style="font-weight:700">'+r.total+'</td></tr>').join('');
+}
+
+// ===== 6. 报价对比 =====
+function buildPriceTable(){
+  const nb=parseInt(document.getElementById('prBidderCount').value)||5;const ctrl=parseFloat(document.getElementById('prCtrlPrice').value)||0;
+  let h='<div class="card"><div class="card-title">报价对比分析</div><div class="table-wrap"><table><thead><tr><th>投标人</th><th>报价(元)</th><th>与最低差</th><th>偏差率</th><th>与控制价</th><th>排名</th></tr></thead><tbody>';
+  for(let i=0;i<nb;i++){h+='<tr><td><input type="text" id="prB'+i+'" placeholder="投标人'+(i+1)+'" style="padding:4px 8px;font-size:12px"></td><td><input type="number" id="prP'+i+'" placeholder="0" style="padding:4px 8px;font-size:12px" oninput="calcPrice()"></td><td id="prDiff'+i+'">-</td><td id="prRate'+i+'">-</td><td id="prCtrl'+i+'">-</td><td id="prRank'+i+'">-</td></tr>'}
+  h+='</tbody></table></div></div>';
+  document.getElementById('priceTable').innerHTML=h;calcPrice();
+}
+function calcPrice(){
+  const nb=parseInt(document.getElementById('prBidderCount').value)||5;const ctrl=parseFloat(document.getElementById('prCtrlPrice').value)||0;
+  const prices=[];for(let i=0;i<nb;i++){prices.push(parseFloat(document.getElementById('prP'+i).value)||0)}
+  const minP=Math.min(...prices.filter(p=>p>0))||0;
+  const arr=[];
+  for(let i=0;i<nb;i++){const p=prices[i];const name=document.getElementById('prB'+i).value||'投标人'+(i+1);arr.push({i,name,p})}
+  arr.sort((a,b)=>a.p-b.p);
+  arr.forEach((r,idx)=>{
+    const diff=r.p-minP;const rate=minP>0?(diff/minP*100):0;const ctrlRate=ctrl>0?((r.p-ctrl)/ctrl*100):0;
+    const el1=document.getElementById('prDiff'+r.i);if(el1)el1.textContent=r.p>0?diff.toFixed(0):'-';
+    const el2=document.getElementById('prRate'+r.i);if(el2)el2.innerHTML=r.p>0?(rate>10?'<span style="color:#E5484D">'+rate.toFixed(1)+'%</span>':rate.toFixed(1)+'%'):'-';
+    const el3=document.getElementById('prCtrl'+r.i);if(el3)el3.innerHTML=ctrlRate<0?'<span style="color:#22A06B">'+ctrlRate.toFixed(1)+'%</span>':ctrlRate.toFixed(1)+'%';
+    const el4=document.getElementById('prRank'+r.i);if(el4)el4.innerHTML=r.p>0?(idx+1):'-';
+  });
+}
+
+// ===== 7. 开标记录 =====
+function buildOpeningTable(){
+  const nb=parseInt(document.getElementById('opBidderCount').value)||5;
+  let h='<div class="card"><div class="card-title">投标人签到</div><div class="table-wrap"><table><thead><tr><th>序号</th><th>投标人</th><th>代表</th><th>电话</th><th>密封</th></tr></thead><tbody>';
+  for(let i=0;i<nb;i++){h+='<tr><td>'+(i+1)+'</td><td><input type="text" id="opB'+i+'" style="padding:4px;font-size:12px"></td><td><input type="text" id="opR'+i+'" style="padding:4px;font-size:12px"></td><td><input type="text" id="opT'+i+'" style="padding:4px;font-size:12px"></td><td>✅</td></tr>'}
+  h+='</tbody></table></div></div>';
+  h+='<div class="card"><div class="card-title">唱标记录</div><div class="table-wrap"><table><thead><tr><th>序号</th><th>投标人</th><th>报价(元)</th><th>交货期</th><th>质保</th></tr></thead><tbody>';
+  for(let i=0;i<nb;i++){h+='<tr><td>'+(i+1)+'</td><td><input type="text" id="opB2_'+i+'" style="padding:4px;font-size:12px"></td><td><input type="number" id="opP_'+i+'" style="padding:4px;font-size:12px"></td><td><input type="text" id="opD_'+i+'" style="padding:4px;font-size:12px;width:60px"></td><td><input type="text" id="opW_'+i+'" style="padding:4px;font-size:12px;width:50px"></td></tr>'}
+  h+='</tbody></table></div></div>';
+  h+='<div class="card"><button class="btn btn-outline" onclick="exportOpening()">导出开标记录</button></div>';
+  document.getElementById('openingTable').innerHTML=h;
+  // 自动同步签到名称到唱标
+  for(let i=0;i<nb;i++){const b=document.getElementById('opB'+i);if(b)b.addEventListener('input',()=>{const b2=document.getElementById('opB2_'+i);if(b2&&!b2.value)b2.value=b.value})}
+}
+function exportOpening(){
+  const nb=parseInt(document.getElementById('opBidderCount').value)||5;const proj=document.getElementById('opProjName').value||'未命名';const date=document.getElementById('opDate').value||'';
+  let t='开标记录表\n项目：'+proj+'\n开标日期：'+date+'\n\n签到：\n';
+  for(let i=0;i<nb;i++){t+=(i+1)+'. '+(document.getElementById('opB'+i).value||'')+' '+(document.getElementById('opR'+i).value||'')+' '+(document.getElementById('opT'+i).value||'')+'\n'}
+  t+='\n唱标：\n';
+  for(let i=0;i<nb;i++){t+=(i+1)+'. '+(document.getElementById('opB2_'+i).value||'')+' 报价:'+(document.getElementById('opP_'+i).value||'')+' 交货期:'+(document.getElementById('opD_'+i).value||'')+' 质保:'+(document.getElementById('opW_'+i).value||'')+'\n'}
+  const blob=new Blob([t],{type:'text/plain;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='开标记录_'+proj+'.txt';a.click();
+}
+
+// ===== 8. 合同审查 =====
+const CC={
+  goods:[{cat:'一、合同主体',items:['营业执照有效，经营范围涵盖采购内容','授权代表有有效授权委托书','未被列入失信被执行人名单','未被列入严重违法失信名单']},
+  {cat:'二、商务条款',items:['金额大小写一致，含税/不含税明确','付款方式明确（预付、到货款、验收款、质保金）','交货期明确','交货地点明确','违约金计算方式和上限']},
+  {cat:'三、技术条款',items:['规格型号与招标/中标文件一致','质量标准明确','验收标准和程序','质保期起算和期限','售后响应时间']},
+  {cat:'四、法律条款',items:['违约责任对等','争议解决方式约定','合同生效条件','合同解除条件','知识产权归属']},
+  {cat:'五、风险条款',items:['不可抗力条款','保密条款','转包/分包限制','合同变更程序','档案保存要求']}],
+  service:[{cat:'一、合同主体',items:['营业执照有效','相关资质（ISO认证等）','授权代表有效授权','未被列入失信名单']},
+  {cat:'二、商务条款',items:['金额及付款方式明确','服务期限起止日期','费用调整机制','发票类型和时间','违约金计算']},
+  {cat:'三、服务内容',items:['服务范围和边界','SLA可量化（响应/解决时间）','人员配置要求','交付物要求','变更处理流程']},
+  {cat:'四、法律条款',items:['违约责任对等','争议解决约定','合同生效条件','解除和退出机制','知识产权归属','保密和数据安全']},
+  {cat:'五、风险条款',items:['不可抗力','服务连续性保障','人员变更管理','数据安全和隐私','终止后过渡安排']}],
+  engineering:[{cat:'一、合同主体',items:['营业执照有效','施工资质（总承包/专业承包）','安全生产许可证','授权代表有效授权']},
+  {cat:'二、商务条款',items:['金额（暂列金额明确）','付款节点（预付/进度/结算/质保金）','工期明确','延误违约金','工程量清单计价规范']},
+  {cat:'三、技术条款',items:['工程范围明确','施工标准规范','材料设备标准','竣工验收标准','质量保修期和范围']},
+  {cat:'四、法律条款',items:['违约责任对等','争议解决（建议仲裁）','合同生效条件','变更和签证管理','安全责任划分','工程保险']},
+  {cat:'五、风险条款',items:['不可抗力','分包限制（主体不得分包）','农民工工资保障','环保和文明施工','缺陷责任期管理']}],
+};
+function genContractChecklist(){
+  const t=document.getElementById('contractType').value;if(!t)return;const data=CC[t];
+  let h='';data.forEach((sec,si)=>{h+='<div class="card"><div class="card-title">'+sec.cat+'</div>';sec.items.forEach((item,ii)=>{const key=t+'_'+si+'_'+ii;const saved=S.checklist[key]||{s:'',n:''};
+    h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);flex-wrap:wrap"><div style="flex:1;min-width:120px;font-size:13px">'+item+'</div><div class="checkbox-row"><label><input type="checkbox" '+(saved.s==='ok'?'checked':'')+' onchange="updCK(\''+key+'\',\'ok\',this.checked)">✅</label><label><input type="checkbox" '+(saved.s==='problem'?'checked':'')+' onchange="updCK(\''+key+'\',\'problem\',this.checked)">❌</label><label><input type="checkbox" '+(saved.s==='na'?'checked':'')+' onchange="updCK(\''+key+'\',\'na\',this.checked)">N/A</label></div><input type="text" placeholder="意见" value="'+(saved.n||'')+'" style="width:100%;margin-top:4px;font-size:12px;padding:4px" onchange="updCKn(\''+key+'\',this.value)"></div>'});
+    h+='</div>'});
+  document.getElementById('contractChecklist').innerHTML=h;
+}
+function updCK(k,s,c){if(!c)delete S.checklist[k];else{S.checklist[k]=S.checklist[k]||{s:'',n:''};S.checklist[k].s=s}save()}
+function updCKn(k,n){if(!S.checklist[k])S.checklist[k]={s:''};S.checklist[k].n=n;save()}
+function exportChecklist(){
+  const t=document.getElementById('contractType').value;if(!t){alert('请选类型');return}
+  const name=document.getElementById('contractType').selectedOptions[0].text;const data=CC[t];
+  let txt='合同审查记录\n类型：'+name+'\n日期：'+new Date().toLocaleDateString()+'\n\n';
+  data.forEach(sec=>{txt+=sec.cat+'\n';sec.items.forEach(item=>{const k=t+'_'+sec.cat+'_'+item;const sv=S.checklist[Object.keys(S.checklist).find(ck=>ck.includes(item.substring(0,4)))]||{};const st=sv.s==='ok'?'✅':sv.s==='problem'?'❌':sv.s==='na'?'➖':'⬜';txt+='  '+st+' '+item+(sv.n?' | '+sv.n:'')+'\n'});txt+='\n'});
+  const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='合同审查_'+name+'.txt';a.click();
+}
+
+// ===== 9. 归档清单 =====
+const ARCHIVE_ITEMS=[
+  ['一、立项','项目立项审批表'],['一、立项','采购需求说明书'],['一、立项','预算批复文件'],['一、立项','采购方式确认表'],
+  ['二、招标文件','招标文件（定稿）'],['二、招标文件','内部审核记录'],
+  ['三、公告','招标公告'],['三、公告','文件发售记录'],['三、公告','答疑文件'],['三、公告','补充/修改文件'],
+  ['四、开标','投标人签到表'],['四、开标','开标记录表'],['四、开标','投标文件（全部）'],['四、开标','投标保证金凭证'],
+  ['五、评标','专家抽取记录'],['五、评标','评委签到表'],['五、评标','保密承诺书'],['五、评标','初步评审表'],['五、评标','详细评审表'],['五、评标','评标汇总表'],['五、评标','评标报告'],
+  ['六、定标','中标候选人公示'],['六、定标','中标通知书'],['六、定标','未中标通知书'],['六、定标','保证金退还记录'],
+  ['七、合同','采购合同'],['七、合同','履约保证金凭证'],
+  ['八、其他','会议纪要'],['八、其他','往来函件'],['八、其他','质疑/投诉记录'],
+];
+function renderArchive(){
+  if(!S.archive.length){S.archive=ARCHIVE_ITEMS.map((it,i)=>({stage:it[0],doc:it[1],checked:false}));save()}
+  let h='<div class="table-wrap"><table><thead><tr><th>序号</th><th>阶段</th><th>文件</th><th>已归档</th></tr></thead><tbody>';
+  S.archive.forEach((item,i)=>{h+='<tr><td>'+(i+1)+'</td><td><span class="tag tag-gray">'+item.stage+'</span></td><td style="font-size:13px">'+item.doc+'</td><td><input type="checkbox" '+(item.checked?'checked':'')+' onchange="toggleArchive('+i+',this.checked)" style="width:20px;height:20px;accent-color:#22A06B"></td></tr>'});
+  h+='</tbody></table></div>';
+  document.getElementById('archiveChecklist').innerHTML=h;
+  const done=S.archive.filter(a=>a.checked).length;const total=S.archive.length;
+  document.getElementById('archiveStats').innerHTML='<span class="tag tag-green">'+done+'/'+total+' 已归档</span><div class="progress-bar" style="margin-top:8px"><div class="progress-fill" style="width:'+(done/total*100)+'%"></div></div>';
+}
+function toggleArchive(i,v){S.archive[i].checked=v;save();renderArchive()}
+
+// ===== 10. 新人30天 =====
+const PLAN=[
+  {w:'第一周',t:'熟悉公司与基础法规',tasks:['了解公司架构、部门分工','学习公司采购管理制度和流程','通读《招标投标法》《政府采购法》','熟悉常用招标采购平台操作','认识团队，了解分工','了解正在执行的采购项目概况']},
+  {w:'第二周',t:'学习招标文件编制',tasks:['找2-3份历史招标文件研读','学习编制招标公告和投标人须知','学习编制技术需求','学习编制评标办法','学习编制合同条款','尝试起草简单招标公告']},
+  {w:'第三周',t:'参与项目实操',tasks:['跟随一个项目全程参与','学习在平台发布公告','学习接收疑问、编制答疑','参与开标，学习填记录表','参与评标会务，整理评审表','学习用Excel做报价对比和评分']},
+  {w:'第四周',t:'独立承担简单项目',tasks:['在指导下编制完整招标文件','独立在平台发布招标公告','独立组织开标会议','学习编制评标报告和中标通知书','学习合同起草审核流程','独立完成项目归档','总结一个月学习心得']},
+];
+function renderPlan(){
+  if(!Object.keys(S.plan).length){PLAN.forEach((w,i)=>{S.plan['w'+i]=w.tasks.map(t=>({text:t,done:false}))});save()}
+  let totalDone=0,totalT=0;
+  let h='';PLAN.forEach((w,wi)=>{const tasks=S.plan['w'+wi]||[];const done=tasks.filter(t=>t.done).length;const pct=tasks.length?Math.round(done/tasks.length*100):0;totalDone+=done;totalT+=tasks.length;
+    h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div><b style="font-size:15px">'+w.w+'</b> <span style="color:var(--text-light);font-size:12px;margin-left:6px">'+w.t+'</span></div><span class="tag '+(pct===100?'tag-green':pct>0?'tag-blue':'tag-gray')+'">'+done+'/'+tasks.length+'</span></div><div class="progress-bar" style="margin-bottom:10px"><div class="progress-fill" style="width:'+pct+'%"></div></div>'+tasks.map((t,ti)=>'<div class="task-item '+(t.done?'done':'')+'"><input type="checkbox" '+(t.done?'checked':'')+' onchange="togglePlan('+wi+','+ti+',this.checked)"><label>'+t.text+'</label></div>').join('')+'</div>'});
+  document.getElementById('planContent').innerHTML=h;
+  document.getElementById('planProgressBar').style.width=(totalT?totalDone/totalT*100:0)+'%';document.getElementById('planProgressText').textContent=totalDone+'/'+totalT;
+}
+function togglePlan(wi,ti,done){S.plan['w'+wi][ti].done=done;save();renderPlan()}
+
+// ===== 11. 入门指南 =====
+const GUIDE=[
+  {t:'一、什么是招标采购？',b:'招标采购就是"我有钱要买东西/服务，谁来干？大家来比一比，选最合适的"。核心目的是：花好钱（性价比最优）、防腐败（过程透明可追溯）、合规（符合法律法规）。'},
+  {t:'两种主要模式',b:'招标代理：你公司帮甲方组织招标，你是"中间人"角色。采购执行：你公司自己要买东西，自己组织采购。入职第一件事：搞清楚你公司是哪种。'},
+  {t:'二、法律框架',b:'《招标投标法》：适用于工程建设类项目。《政府采购法》：适用于政府机关、事业单位用财政资金采购。不需要背法条，但要知道哪类项目适用哪部法。'},
+  {t:'三、五种采购方式',b:'公开招标：公开发公告，谁都能投标，最常用。邀请招标：邀请特定供应商。竞争性谈判：跟几家分别谈判后比价。竞争性磋商：更看重磋商，综合评分。单一来源：只有一家能做。询价：问几家要报价选最低。'},
+  {t:'四、全流程（公开招标）',b:'立项准备→编制招标文件→发布公告/发售文件→开标→评标→定标签合同→归档。整个周期约1.5-2.5个月。'},
+  {t:'立项准备',b:'确认需求（买什么、买多少）、确认预算、内部审批立项、确定采购方式。产出：采购需求说明书、预算批复、立项审批表。'},
+  {t:'编制招标文件',b:'招标文件是"核心剧本"，包含：招标公告、投标人须知、评标办法、合同条款、技术需求、投标文件格式。注意：资格条件不能有歧视性条款，技术参数不能指定品牌。'},
+  {t:'发布公告',b:'在指定平台发布招标公告，发售招标文件，接受投标人疑问并答疑。法定要求：公告到投标截止≥20日。答疑必须发给所有已购买文件的供应商。'},
+  {t:'开标',b:'到了截止时间公开拆封投标文件，公开唱标（投标人名称、报价、交货期等），记录开标记录表，各方签字。开标时间=投标截止时间。'},
+  {t:'评标',b:'评标委员会5人以上单数（招标人代表≤1/3，其余专家库抽取）。初步评审（资格审查+符合性审查）→详细评审（综合评估法打分或最低价法比价）→推荐中标候选人→出具评标报告。助理只做会务和记录，不参与打分。'},
+  {t:'定标签合同',b:'公示中标候选人（≥3日）→发中标通知书→签合同（≤30日）→退保证金。合同内容必须与招标文件和中标人投标文件一致。'},
+  {t:'归档',b:'整理全部文件归档：立项文件、招标文件、公告、投标文件、开标记录、评标报告、中标通知书、合同等。'},
+  {t:'五、关键数字',b:'公告到投标截止≥20日；评标委员会5人以上单数；公示期≥3日；签合同≤30日（中标通知书发出后）；退保证金≤5个工作日。'},
+  {t:'六、合规红线',b:'不得围标串标、不得设倾向性条款、不得泄露信息、不得违规干预评标、法定时间要求不能压缩。'},
+  {t:'常用术语',b:'甲方/招标人=出钱方；乙方/投标人=竞标方；标书=招标或投标文件；废标=不合规被淘汰；流标=投标人不足3家或全不合格；围标串标=串通报价（违法）；唱标=公开宣读投标信息。'},
+];
+function renderGuide(){
+  document.getElementById('guideContent').innerHTML=GUIDE.map(g=>'<div class="card"><div class="card-title">'+g.t+'</div><p style="font-size:14px;color:#333">'+g.b+'</p></div>').join('');
+}
+
+// ===== 12. SOP =====
+const SOP=[
+  {stage:'阶段一：立项准备',steps:['与甲方确认需求（内容、数量、技术参数、交货期）','确认预算及资金来源','确定采购方式','内部立项审批','产出：需求说明书、预算批复、立项表']},
+  {stage:'阶段二：编制招标文件',steps:['搭建文件框架','编写招标公告/邀请书','编写投标人须知','编写评标办法','编写合同条款','编写技术需求','编写投标文件格式','内部审核→定稿','检查：资格条件无歧视、技术参数不指定品牌、评标标准量化']},
+  {stage:'阶段三：发布公告',steps:['确认发布平台','上传招标公告','发售招标文件并登记购买名单','接收疑问→编写答疑→发给所有购买者','法定：公告到截止≥20日']},
+  {stage:'阶段四：开标',steps:['预订会议室，准备签到表、记录表等','接收投标文件，检查密封','开标会议：签到→检查密封→拆封→唱标→签字确认','填写开标记录表','拍照存档']},
+  {stage:'阶段五：评标',steps:['组建评标委员会（5人以上单数）','专家签到、签保密承诺书','初步评审（资格审查+符合性审查）','详细评审（打分/比价）','汇总评分，推荐中标候选人','出具评标报告，全体签字','红线：不干预评标、不泄露信息、助理不打分']},
+  {stage:'阶段六：定标签合同',steps:['公示中标候选人（≥3日）','发中标通知书','发未中标通知书','退未中标人保证金','签订合同（≤30日）','合同内容与招标文件和投标文件一致']},
+  {stage:'阶段七：归档',steps:['按归档清单逐项检查','整理排序→编制目录','装订成册→扫描电子化','移交档案部门']},
+];
+function renderSOP(){
+  document.getElementById('sopContent').innerHTML=SOP.map(s=>'<div class="card"><div class="card-title">'+s.stage+'</div><ol style="padding-left:18px;line-height:1.8">'+s.steps.map(st=>'<li style="font-size:14px">'+st+'</li>').join('')+'</ol></div>').join('');
+}
+
+// ===== 13. 文档模板 =====
+const TPL=[
+  {t:'📋 招标公告',body:`【项目名称】招标公告
+
+一、招标条件
+本招标项目【项目名称】已由【审批部门】批准，招标人为【招标人全称】，资金来源为【资金来源】。项目已具备招标条件，现进行公开招标。
+
+二、项目概况
+1.项目名称：【项目名称】
+2.项目编号：【编号】
+3.招标内容：【采购内容描述】
+4.交货/服务地点：【地点】
+5.交货期/服务期：【时间要求】
+6.预算金额：【金额】万元
+
+三、投标人资格要求
+1.具有独立承担民事责任的能力
+2.具有良好的商业信誉和健全的财务制度
+3.具有履行合同所必需的设备和专业技术能力
+4.有依法缴纳税收和社会保障资金的记录
+5.前三年内无重大违法记录
+6.【特殊资质要求】
+7.【接受/不接受】联合体投标
+
+四、招标文件获取
+1.获取时间：【日期】至【日期】（≥5个工作日）
+2.获取方式：【线上下载/现场购买】
+3.售价：【金额】元/套
+
+五、投标文件递交
+1.截止时间：【年/月/日 时:分】（公告后≥20日）
+2.递交地点：【地址】
+
+六、开标
+1.开标时间：【同投标截止时间】
+2.开标地点：【地址】
+
+七、联系方式
+招标人：【全称】  地址：【地址】
+联系人：【姓名】  电话：【电话】
+
+【年/月/日】`},
+  {t:'📨 投标邀请书',body:`投标邀请书
+
+【被邀请单位名称】：
+
+【项目名称】（编号：【编号】）已具备招标条件，现邀请你单位参加投标。
+
+一、项目概况
+1.项目名称：【名称】  2.编号：【编号】
+3.招标范围：【内容】  4.预算：【金额】万元
+
+二、资格要求
+【资格条件简述】
+
+三、文件获取
+1.获取时间：【日期】至【日期】
+2.获取方式：【方式】
+
+四、投标递交
+截止时间：【日期 时:分】  递交地点：【地址】
+
+五、开标
+时间：【同截止时间】  地点：【地址】
+
+招标人：【全称】  联系人：【姓名】  电话：【电话】
+【年/月/日】`},
+  {t:'📮 中标通知书',body:`中标通知书
+
+【中标人全称】：
+
+你单位参加的【项目名称】（编号：【编号】）招标，经评标委员会评审推荐，招标人确认，通知如下：
+
+一、中标项目：【项目名称】
+二、中标金额：人民币（大写）【大写金额】（¥【小写金额】）
+三、交货期/服务期：【时间】
+四、交货地点：【地点】
+五、质量标准：【标准】
+
+请在收到本通知书后于【日期】前与招标人签订合同。逾期不签的，取消中标资格，投标保证金不予退还。
+
+招标人：【全称】（盖章）
+招标代理机构：【全称】（盖章）
+【年/月/日】`},
+  {t:'📝 未中标通知书',body:`未中标通知书
+
+【未中标人全称】：
+
+你单位参加的【项目名称】（编号：【编号】）招标，经评标委员会评审，你单位未中标。
+
+一、中标人：【中标人全称】
+二、中标金额：人民币（大写）【大写金额】（¥【小写金额】）
+
+感谢参与！请收到本通知后【5个工作日】内办理保证金退还。
+
+招标人：【全称】（盖章）
+【年/月/日】`},
+  {t:'❓ 答疑/澄清函',body:`【项目名称】答疑/澄清文件
+
+项目编号：【编号】
+
+致各潜在投标人：
+
+部分潜在投标人提出疑问，现统一答复如下。本文件为招标文件组成部分，与招标文件具有同等效力。
+
+一、疑问及答复
+
+问题1：【疑问原文】
+答复：【答复内容】
+
+问题2：【疑问原文】
+答复：【答复内容】
+
+二、招标文件修改（如有）
+1.第【X】章第【X】条"【原文】"修改为"【修改后】"
+
+三、其他
+1.本文件发给所有已购买文件的潜在投标人
+2.投标截止时间【不变/延长至日期】
+
+招标人：【全称】（盖章）
+【年/月/日】`},
+  {t:'📋 评标报告',body:`评标报告
+
+项目编号：【编号】
+
+一、项目基本情况
+项目名称：【名称】  采购方式：【方式】
+评标办法：【综合评估法/最低价法】
+公告日期：【日期】  开标日期：【日期】
+
+二、开标情况
+共【N】家投标人按时递交投标文件。
+
+三、评标委员会
+共【N】人组成（5人以上单数），主任评委：【姓名】
+
+四、初步评审
+【N】家通过，【N】家未通过（原因：【】）
+
+五、详细评审结果
+排名  投标人  价格分  技术分  总分
+1    【名称】  【】    【】   【】
+2    【名称】  【】    【】   【】
+3    【名称】  【】    【】   【】
+
+六、推荐意见
+第一中标候选人：【名称】  报价：【金额】
+第二中标候选人：【名称】  报价：【金额】
+
+评标委员会全体签字：
+【年/月/日】`},
+  {t:'📝 会议纪要',body:`【项目名称】会议纪要
+
+会议主题：【如：招标文件审核会】
+项目编号：【编号】
+
+一、基本信息
+时间：【日期 时:分】  地点：【地点】
+主持人：【姓名】  记录人：【姓名】
+参会人员：【列出姓名及单位】
+
+二、议题
+1.【议题一】 2.【议题二】
+
+三、内容
+（一）【议题一】
+【讨论内容和意见】
+决议：【如有】
+
+四、待办事项
+序号  事项  负责人  完成时间
+
+记录人签字：___  主持人签字：___
+【年/月/日】`},
+];
+function renderTemplates(){
+  document.getElementById('templatesContent').innerHTML=TPL.map((t,i)=>'<div class="card"><div class="card-title collapsible-header" onclick="var b=document.getElementById(\'tplBody'+i+'\');b.classList.toggle(\'open\')"><span>'+t.t+'</span><span style="float:right">▼</span></div><div class="collapsible-body" id="tplBody'+i+'"><pre style="white-space:pre-wrap;font-size:13px;line-height:1.6;background:#F5F6F8;padding:12px;border-radius:8px;overflow-x:auto">'+t.body+'</pre><button class="btn btn-sm btn-outline" onclick="copyTpl('+i+')" style="margin-top:8px">📋 复制全文</button></div></div>').join('');
+}
+function copyTpl(i){const t=TPL[i].body;navigator.clipboard.writeText(t).then(()=>alert('✅已复制')).catch(()=>{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);alert('✅已复制')})}
+
+// ===== 14. 法规速查 =====
+const LAW=[
+  {cat:'一、采购方式与适用条件',items:[
+    {t:'公开招标',d:'以公告方式邀请不特定投标人投标。是政府采购的主要方式。《招标投标法》第三条、《政府采购法》第二十六条'},
+    {t:'邀请招标',d:'以邀请书方式邀请特定投标人。适用于：特殊性项目、只能从有限范围供应商采购；或公开招标费用占比过大。《招标投标法实施条例》'},
+    {t:'竞争性谈判',d:'与不少于3家供应商分别谈判后报价确定。适用于：招标后无供应商投标、技术复杂不能确定规格、不能事先算出价格。《政府采购法》第三十八条'},
+    {t:'竞争性磋商',d:'类似谈判但更注重磋商，最终综合评分确定。适用于政府购买服务、技术创新项目。《政府采购竞争性磋商管理办法》'},
+    {t:'单一来源',d:'只能从唯一供应商采购，或不可预见的紧急情况。需公示且无异议。《政府采购法》第三十一条'},
+    {t:'询价',d:'向3家以上供应商询价比较后选最低。适用于货物规格标准统一、货源充足、价格变化小的项目。《政府采购法》第四十条'},
+  ]},
+  {cat:'二、法定时间要求',items:[
+    {t:'公告到投标截止',d:'≥20日。《招标投标法》第二十三条'},
+    {t:'文件发售期',d:'≥5个工作日。常规要求'},
+    {t:'提问截止',d:'投标截止15日前提出。《招标投标法实施条例》第二十二条'},
+    {t:'答复时限',d:'收到疑问后3日内答复。《实施条例》'},
+    {t:'公示期',d:'中标候选人公示≥3日。《实施条例》第五十四条'},
+    {t:'签合同',d:'中标通知书发出后30日内。《招标投标法》第四十六条'},
+    {t:'退保证金',d:'通知书发出后5个工作日内退还未中标人。《实施条例》第五十七条'},
+  ]},
+  {cat:'三、评标委员会',items:[
+    {t:'人数',d:'5人以上单数。招标人代表不超过1/3。《实施条例》第四十六条'},
+    {t:'专家来源',d:'从依法组建的专家库随机抽取。《实施条例》'},
+    {t:'专家资格',d:'从事相关领域工作满8年且具有高级职称。《招标投标法》第三十七条'},
+    {t:'回避',d:'与投标人有利害关系的人不得进入。《招标投标法》第三十七条'},
+    {t:'保密',d:'成员名单在中标结果确定前保密。《招标投标法》第三十七条'},
+  ]},
+  {cat:'四、资格与合规',items:[
+    {t:'资格条件',d:'营业执照、财务状况、纳税证明、专业技术能力、无重大违法记录。《政府采购法》第二十二条'},
+    {t:'不得歧视',d:'不得以不合理条件限制或排斥潜在投标人。《招标投标法》第十八条'},
+    {t:'不得指定品牌',d:'招标文件不得指定特定品牌或供应商。《招标投标法》第二十条'},
+    {t:'不得围标串标',d:'投标人不得相互串通报价，招标人不得与投标人串通。《招标投标法》第三十二条'},
+    {t:'不得泄露信息',d:'不得透露潜在投标人信息及可能影响公平竞争的情况。《招标投标法》第二十二条'},
+    {t:'不得干预评标',d:'任何单位和个人不得非法干预评标。《招标投标法》第三十八条'},
+    {t:'合同不得实质性变更',d:'不得再行订立背离合同实质性内容的其他协议。《招标投标法》第四十六条'},
+    {t:'不得转包',d:'中标人不得转让中标项目，不得肢解转让。《招标投标法》第四十八条'},
+  ]},
+];
+function renderLaw(){
+  const s=(document.getElementById('lawSearch').value||'').toLowerCase();
+  let h='';
+  LAW.forEach(cat=>{
+    const items=cat.items.filter(i=>{const t=(i.t+i.d).toLowerCase();return !s||t.includes(s)});
+    if(!items.length)return;
+    h+='<div class="kb-sec"><div class="kb-sec-header" onclick="var b=this.nextElementSibling;b.classList.toggle(\'open\')">'+cat.cat+' <span>▼</span></div><div class="kb-sec-body">'+items.map(i=>{
+      let t=i.t,d=i.d;
+      if(s){const reg=new RegExp('('+s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');t=t.replace(reg,'<mark style="background:var(--highlight);padding:0 2px;border-radius:2px">$1</mark>');d=d.replace(reg,'<mark style="background:var(--highlight);padding:0 2px;border-radius:2px">$1</mark>')}
+      return '<div class="kb-item"><strong>'+t+'</strong><div class="desc">'+d+'</div></div>';
+    }).join('')+'</div></div>';
+  });
+  if(!h)h='<div class="empty">未找到匹配条款</div>';
+  document.getElementById('lawContent').innerHTML=h;
+  if(s){document.querySelectorAll('.kb-sec-body').forEach(b=>b.classList.add('open'))}
+}
+
+// ===== 17. 常用网站链接 =====
+const LINKS=[
+  {cat:'📋 国家级招标采购平台',sites:[
+    {name:'中国招标投标公共服务平台',url:'http://www.cebpubservice.com/',desc:'全国招标公告发布平台'},
+    {name:'中国政府采购网',url:'http://www.ccgp.gov.cn/',desc:'全国政府采购信息发布平台'},
+    {name:'全国公共资源交易平台',url:'https://www.ggzy.gov.cn/',desc:'全国公共资源交易信息'},
+    {name:'中国采购与招标网',url:'https://www.chinabidding.cn/',desc:'招标信息查询'},
+    {name:'信用中国',url:'https://www.creditchina.gov.cn/',desc:'查询企业信用、失信记录'},
+    {name:'国家企业信用信息公示系统',url:'https://www.gsxt.gov.cn/',desc:'查询企业工商信息'},
+  ]},
+  {cat:'🏛️ 河南省级平台',sites:[
+    {name:'河南省政府采购网',url:'http://www.hngp.gov.cn/',desc:'河南政府采购公告、中标结果'},
+    {name:'河南省公共资源交易中心',url:'http://www.hnggzy.cn/',desc:'河南省级公共资源交易'},
+    {name:'河南省财政厅',url:'https://czt.henan.gov.cn/',desc:'财政政策、采购管理制度'},
+    {name:'河南省招标投标公共服务平台',url:'http://www.hnztbfw.com/',desc:'河南招标公告发布'},
+    {name:'河南省发改委',url:'https://fgw.henan.gov.cn/',desc:'项目审批、政策法规'},
+    {name:'河南省住建厅',url:'https://hnjst.henan.gov.cn/',desc:'工程建设相关资质查询'},
+  ]},
+  {cat:'🏢 安阳市级平台',sites:[
+    {name:'安阳市公共资源交易中心',url:'http://www.ayggzy.cn/',desc:'安阳本地招标采购信息'},
+    {name:'安阳市政府采购网',url:'http://www.aygp.gov.cn/',desc:'安阳政府采购公告'},
+    {name:'安阳市财政局',url:'https://czj.anyang.gov.cn/',desc:'安阳财政政策、采购管理'},
+    {name:'安阳市发改委',url:'https://fgw.anyang.gov.cn/',desc:'项目审批、政策'},
+    {name:'安阳市住建局',url:'https://zjj.anyang.gov.cn/',desc:'工程建设管理'},
+    {name:'安阳市人民政府',url:'https://www.anyang.gov.cn/',desc:'政府信息、政策发布'},
+  ]},
+  {cat:'🔍 实用查询工具',sites:[
+    {name:'全国建筑市场监管公共服务平台',url:'https://jzsc.mohurd.gov.cn/',desc:'查询建筑企业资质、人员资格'},
+    {name:'全国认证认可信息公共服务平台',url:'http://cx.cnca.cn/',desc:'查询ISO等认证证书真伪'},
+    {name:'国家知识产权局',url:'https://www.cnipa.gov.cn/',desc:'查询专利、商标信息'},
+    {name:'中国裁判文书网',url:'https://wenshu.court.gov.cn/',desc:'查询企业涉诉记录'},
+    {name:'国家税务总局',url:'http://www.chinatax.gov.cn/',desc:'税务政策查询'},
+  ]},
+];
+function renderLinks(){
+  let h='';
+  LINKS.forEach(cat=>{
+    h+='<div class="card"><div class="card-title">'+cat.cat+'</div>';
+    cat.sites.forEach(site=>{
+      h+='<a href="'+site.url+'" target="_blank" style="display:block;padding:10px 12px;margin-bottom:6px;background:var(--card-alt);border-radius:8px;border:1px solid var(--border);text-decoration:none;color:var(--text);transition:all .2s">';
+      h+='<div style="display:flex;justify-content:space-between;align-items:center">';
+      h+='<div><div style="font-weight:600;font-size:14px;color:var(--primary-dark)">'+site.name+'</div>';
+      h+='<div style="font-size:12px;color:var(--text-light);margin-top:2px">'+site.desc+'</div></div>';
+      h+='<span style="font-size:18px;color:var(--primary)">→</span></div></a>';
+    });
+    h+='</div>';
+  });
+  document.getElementById('linksContent').innerHTML=h;
+}
+
+// ===== 15. 学习课堂 =====
+const LEARN=[
+  {icon:'📖',title:'招标投标法基础',summary:'了解法律框架和基本规则',
+    sections:[
+      {h:'《中华人民共和国招标投标法》',b:'招标采购领域最核心的法律，2017年修订。'},
+      {h:'必须招标的项目',b:'大型基础设施、公用事业关系公共利益/公众安全的项目；全部或部分使用国有资金/政府融资的项目。'},
+      {h:'招标方式',b:'公开招标（所有法定项目原则上必须公开招标）、邀请招标（特殊情况下经批准可邀请招标）。'},
+      {h:'关键时间节点',b:'招标公告至投标截止至少20日；招标文件发售至投标截止至少20日。'},
+      {h:'评标委员会',b:'由招标人代表和有关技术/经济等方面专家组成，成员为5人以上单数，其中专家不少于成员总数的2/3。'},
+    ],
+    tip:'入职后第一件事：通读一遍招标投标法及其实施条例，这是做采购工作的法律根基。'},
+  {icon:'🧭',title:'采购方式全解析',summary:'6种采购方式的区别和适用场景',
+    sections:[
+      {h:'1. 公开招标',b:'最常用，无限竞争，所有符合条件者均可投标。适合金额大、市场成熟的项目。'},
+      {h:'2. 邀请招标',b:'有限竞争，邀请3家以上特定供应商投标。适合特殊性强的项目。'},
+      {h:'3. 竞争性谈判',b:'与多家供应商（3家以上）分别谈判，最后统一报价。适合复杂、不确定需求的项目。'},
+      {h:'4. 竞争性磋商',b:'类似谈判但更强调磋商，最终综合评审。适合服务类、需要综合评价的项目。'},
+      {h:'5. 询价',b:'向3家以上供应商询价，选最低价。适合规格标准统一的货物。'},
+      {h:'6. 单一来源采购',b:'只能从唯一供应商处采购。极少使用，需严格审批公示。'},
+    ]},
+  {icon:'📝',title:'招标文件怎么编',summary:'招标文件的结构和编制要点',
+    sections:[
+      {h:'投标邀请书',b:'项目名称、编号、采购方式、预算、截止时间等关键信息。'},
+      {h:'投标人须知',b:'投标资格要求、文件格式、递交方式、开标时间等。'},
+      {h:'技术需求/规格',b:'采购标的的详细技术参数、质量标准。'},
+      {h:'合同条款',b:'付款方式、交货/服务期限、违约责任等。'},
+      {h:'评标标准和方法',b:'价格分、技术分、商务分各占比多少。'},
+      {h:'投标文件格式',b:'格式模板和必备文件清单。'},
+    ],
+    tip:'新人入职后往往从协助编制招标文件的技术需求部分开始，需要和业务部门对接需求。'},
+  {icon:'🎯',title:'评标方法详解',summary:'综合评分法、最低价法怎么选',
+    sections:[
+      {h:'1. 综合评估法',b:'价格、技术、商务、服务等多个维度打分，加权汇总排定名次。通常价格分占30%-60%，技术分占30%-50%。'},
+      {h:'2. 最低评标价法',b:'满足实质性要求前提下，报价最低者中标。适合规格统一的标准化产品。'},
+      {h:'3. 综合评议法',b:'类似综合评分，但可不设具体分值，由评标委员会综合评议。'},
+    ],
+    tip:'评标时价格分通常有固定计算公式：价格分=（基准价/投标价）×价格分满分。需要理解这个公式如何运作。'},
+  {icon:'🤝',title:'供应商管理',summary:'供应商是采购工作的生命线',
+    sections:[
+      {h:'供应商库',b:'公司一般有合格供应商名录，了解怎么入库、怎么管理。'},
+      {h:'供应商资质审查',b:'营业执照、资质证书、财务状况、业绩证明等。'},
+      {h:'供应商评价体系',b:'质量、价格、交付、服务、合作意愿等维度打分评级。'},
+      {h:'黑名单管理',b:'围标串标、弄虚作假、严重违约的供应商要列入黑名单。'},
+      {h:'日常维护',b:'定期回访、信息更新、关系维护。'},
+    ]},
+  {icon:'⚠️',title:'采购风险与红线',summary:'这些雷区绝对不能踩',
+    sections:[
+      {h:'围标串标',b:'与投标人串通投标、提前泄露标底等，是违法行为。'},
+      {h:'泄露保密信息',b:'评标过程、评标专家信息、投标文件内容都属于保密信息。'},
+      {h:'拆分项目规避招标',b:'把大项目拆成小块逃避招标程序。'},
+      {h:'倾向性条款',b:'招标文件中设置指向特定供应商的条款。'},
+      {h:'收受好处',b:'收供应商礼品、回扣、好处费等。'},
+    ],
+    tip:'所有采购文件、沟通记录都可能被审计，做事要留痕、合规、透明。'},
+  {icon:'📋',title:'合同与履约管理',summary:'招标后的合同管理是采购的重要环节',
+    sections:[
+      {h:'中标通知书',b:'评标完成后发出，是合同成立的依据之一。'},
+      {h:'合同签订',b:'依据招标文件和中标人投标文件签订，不得背离实质性内容。'},
+      {h:'履约保证金',b:'中标人需按招标文件要求提交，通常为合同金额的5%-10%。'},
+      {h:'合同变更',b:'变更需双方协商并签订补充协议，重大变更需报批。'},
+      {h:'验收与结算',b:'供应商履约后组织验收，合格后按约定付款。'},
+      {h:'档案管理',b:'所有采购文件需归档保存，一般不少于15年。'},
+    ]},
+  {icon:'📊',title:'政府采购法要点',summary:'规范财政性资金采购行为',
+    sections:[
+      {h:'采购方式有5种',b:'公开招标、邀请招标、竞争性谈判、竞争性磋商、单一来源采购、询价。'},
+      {h:'公开招标为首选',b:'达到公开招标数额标准必须公开招标，变更方式需报财政部门批准。'},
+      {h:'与招投标法区别',b:'招投标法侧重工程建设项目；政府采购法侧重政府日常采购。两部法律有交叉，需根据项目性质确定适用。'},
+      {h:'政府采购平台',b:'各省有政府采购网，公告、中标结果均需在平台公示。'},
+    ]},
+  {icon:'📅',title:'全流程时间轴',summary:'从立项到归档的完整时间线',
+    sections:[
+      {h:'立项准备（1-2周）',b:'确认需求、预算、采购方式，内部审批立项。'},
+      {h:'编制招标文件（1-2周）',b:'起草招标文件，内部审核定稿。'},
+      {h:'公告发布（≥20日）',b:'在平台发布招标公告，发售文件，答疑。'},
+      {h:'开标（1天）',b:'投标截止，公开开标唱标。'},
+      {h:'评标（1-3天）',b:'评标委员会评审，推荐中标候选人。'},
+      {h:'公示（≥3日）',b:'中标候选人公示。'},
+      {h:'签合同（≤30日）',b:'发中标通知书，签订合同。'},
+      {h:'归档',b:'整理全部文件归档保存。'},
+    ],
+    tip:'整个项目周期约1.5-2.5个月，法定时间节点必须严格遵守。'},
+];
+function renderLearn(){
+  if(!S.learn)S.learn={};
+  let done=0;
+  let h='';
+  LEARN.forEach((lesson,i)=>{
+    const learned=S.learn['l'+i]||false;
+    if(learned)done++;
+    h+='<div class="card" style="margin-bottom:12px">';
+    h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">';
+    h+='<span style="font-size:24px">'+lesson.icon+'</span>';
+    h+='<div style="flex:1"><div style="font-size:15px;font-weight:600">'+lesson.title+'</div>';
+    h+='<div style="font-size:12px;color:var(--text-light)">'+lesson.summary+'</div></div>';
+    h+='<span class="tag '+(learned?'tag-green':'tag-gray')+'">'+(learned?'已学习':'未学习')+'</span>';
+    h+='</div>';
+    h+='<div class="collapsible-body open" id="learnBody'+i+'">';
+    lesson.sections.forEach(sec=>{
+      h+='<div style="padding:8px 0;border-bottom:1px solid var(--border)"><strong style="font-size:14px;display:block;margin-bottom:2px">'+sec.h+'</strong><span style="font-size:13px;color:#555">'+sec.b+'</span></div>';
+    });
+    if(lesson.tip){
+      h+='<div style="margin-top:10px;padding:10px;background:#FEF3C7;border-radius:8px;font-size:13px;color:#92400E"><strong>💡 学习要点：</strong>'+lesson.tip+'</div>';
+    }
+    h+='<button class="btn '+(learned?'btn-outline':'btn-success')+' btn-block" style="margin-top:10px" onclick="toggleLearn('+i+')">'+(learned?'取消标记':'标记为已学习')+'</button>';
+    h+='</div></div>';
+  });
+  document.getElementById('learnContent').innerHTML=h;
+  const total=LEARN.length;
+  document.getElementById('learnProgressBar').style.width=(total?done/total*100:0)+'%';
+  document.getElementById('learnProgressText').textContent=done+'/'+total;
+}
+function toggleLearn(i){
+  S.learn['l'+i]=!S.learn['l'+i];save();renderLearn();
+}
+
+// ===== 16. 工作日志 =====
+function addLog(){
+  const date=document.getElementById('logDate').value;const content=document.getElementById('logContent').value.trim();
+  if(!date){alert('请选择日期');return}if(!content){alert('请填写工作内容');return}
+  const log={date,project:document.getElementById('logProject').value.trim(),content,contact:document.getElementById('logContact').value.trim(),method:document.getElementById('logMethod').value,trace:document.getElementById('logTrace').value,remark:document.getElementById('logRemark').value.trim(),ts:Date.now()};
+  S.logs.unshift(log);save();renderLogs();
+  document.getElementById('logContent').value='';document.getElementById('logProject').value='';document.getElementById('logContact').value='';document.getElementById('logRemark').value='';
+  alert('✅ 日志已记录');
+}
+function renderLogs(){
+  const ft=document.getElementById('filterLogTrace').value;const s=(document.getElementById('searchLog').value||'').toLowerCase();
+  let list=S.logs.filter(l=>{if(ft&&l.trace!==ft)return false;if(s&&!l.content.toLowerCase().includes(s)&&!(l.project||'').toLowerCase().includes(s)&&!(l.contact||'').toLowerCase().includes(s))return false;return true});
+  const traceColor={'邮件确认':'tag-green','会议纪要':'tag-blue','签收单':'tag-green','系统记录':'tag-blue','截图存档':'tag-yellow','情况说明':'tag-yellow','暂未留痕(待补)':'tag-red'};
+  if(!list.length){document.getElementById('logList').innerHTML='<div class="empty"><div class="empty-icon">✏️</div>暂无日志记录<br><span style="font-size:12px">每天记录工作内容，养成留痕习惯</span></div>';return}
+  document.getElementById('logList').innerHTML=list.map((l,i)=>{
+    const idx=S.logs.indexOf(l);
+    return '<div style="padding:10px 0;border-bottom:1px solid var(--border)">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:4px">'+
+    '<span style="font-weight:600;font-size:14px">'+l.date+'</span>'+
+    '<span class="tag '+(traceColor[l.trace]||'tag-gray')+'">'+l.trace+'</span>'+
+    '</div>'+
+    (l.project?'<div style="font-size:12px;color:var(--text-light);margin-bottom:2px">📁 '+l.project+'</div>':'')+
+    '<div style="font-size:14px;margin-bottom:4px">'+l.content+'</div>'+
+    (l.contact||l.method?'<div style="font-size:12px;color:var(--text-light)">'+(l.method?'💬 '+l.method:'')+(l.contact?' · 👤 '+l.contact:'')+'</div>':'')+
+    (l.remark?'<div style="font-size:12px;color:#92400E;margin-top:2px">📌 '+l.remark+'</div>':'')+
+    '<div style="margin-top:4px"><button class="btn btn-sm btn-danger" onclick="delLog('+idx+')">删除</button></div>'+
+    '</div>';
+  }).join('');
+}
+function delLog(idx){if(!confirm('确定删除这条日志？'))return;S.logs.splice(idx,1);save();renderLogs()}
+function exportLogs(){
+  if(!S.logs.length){alert('暂无日志');return}
+  let t='工作日志导出\n导出日期：'+new Date().toLocaleDateString()+'\n共'+S.logs.length+'条记录\n\n';
+  S.logs.forEach((l,i)=>{
+    t+='━━━━━━━━━━━━━━━━━━━━\n';
+    t+='['+(i+1)+'] '+l.date+'\n';
+    if(l.project)t+='项目：'+l.project+'\n';
+    t+='工作内容：'+l.content+'\n';
+    if(l.contact)t+='沟通对象：'+l.contact+'\n';
+    if(l.method)t+='沟通方式：'+l.method+'\n';
+    t+='留痕方式：'+l.trace+'\n';
+    if(l.remark)t+='备注：'+l.remark+'\n';
+    t+='\n';
+  });
+  const blob=new Blob([t],{type:'text/plain;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='工作日志_'+new Date().toISOString().slice(0,10)+'.txt';a.click();
+}
+
+// ===== 数据导入导出 =====
+function exportData(){
+  const d={projects:S.projects,plan:S.plan,checklist:S.checklist,archive:S.archive,learn:S.learn,logs:S.logs,date:new Date().toISOString()};
+  const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='招标采购工作台备份_'+new Date().toISOString().slice(0,10)+'.json';a.click();
+}
+function importData(e){
+  const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.projects)S.projects=d.projects;if(d.plan)S.plan=d.plan;if(d.checklist)S.checklist=d.checklist;if(d.archive)S.archive=d.archive;if(d.learn)S.learn=d.learn;if(d.logs)S.logs=d.logs;save();alert('✅导入成功');navTo('dashboard')}catch(err){alert('❌格式错误')}};r.readAsText(f);e.target.value='';
+}
+function clearData(){if(!confirm('确定清空所有数据？建议先导出备份。'))return;if(!confirm('再次确认：所有数据将被删除。'))return;localStorage.removeItem('zb2_projects');localStorage.removeItem('zb2_plan');localStorage.removeItem('zb2_checklist');localStorage.removeItem('zb2_archive');localStorage.removeItem('zb2_learn');localStorage.removeItem('zb2_logs');S={projects:[],plan:{},checklist:{},archive:[],learn:{},logs:[]};alert('已清空');navTo('dashboard')}
+
+// ===== 初始化 =====
+document.getElementById('calcDate').valueAsDate=new Date();
+// 问候语
+function setGreeting(){
+  const h=new Date().getHours();let g='';
+  if(h<6)g='夜深了，怡怡早点休息 🌙';
+  else if(h<9)g='早上好，怡怡！加油 💪';
+  else if(h<12)g='上午好，怡怡 😊';
+  else if(h<14)g='中午好，怡怡！记得吃饭 🍱';
+  else if(h<18)g='下午好，怡怡 ☕';
+  else if(h<22)g='晚上好，怡怡 🌆';
+  else g='夜深了，怡怡注意休息 🌙';
+  const now=new Date();const week='日一二三四五六'[now.getDay()];
+  const dateStr=now.getMonth()+1+'月'+now.getDate()+'日 周'+week;
+  const title=document.getElementById('topbarTitle');
+  if(title)title.innerHTML='🌿 '+g;
+  // 首页也加问候
+  const dashH=document.querySelector('#page-dashboard .page-header h2');
+  if(dashH)dashH.textContent='👋 '+g;
+  const dashSub=document.querySelector('#page-dashboard .page-header .sub');
+  if(dashSub)dashSub.textContent='今天是'+dateStr+' · 招标采购助理工作台';
+}
+setGreeting();
+renderDashboard();renderDecision();
+</script>
+</body>
+</html>
